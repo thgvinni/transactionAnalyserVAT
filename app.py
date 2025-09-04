@@ -24,9 +24,20 @@ def upload_file():
         return jsonify({'error': 'Please upload a CSV file'}), 400
     
     try:
-        # Read CSV data
-        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
-        df = pd.read_csv(stream)
+        # Read file content
+        content = file.stream.read().decode("UTF8")
+        stream = io.StringIO(content, newline=None)
+        
+        # Detect separator by checking first line
+        first_line = content.split('\n')[0] if content else ""
+        if '|' in first_line and first_line.count('|') >= first_line.count(','):
+            separator = '|'
+        else:
+            separator = ','
+        
+        # Read CSV/PSV data with detected separator
+        stream.seek(0)  # Reset stream position
+        df = pd.read_csv(stream, sep=separator)
         
         # Clean column names
         df.columns = df.columns.str.strip().str.replace('"', '')

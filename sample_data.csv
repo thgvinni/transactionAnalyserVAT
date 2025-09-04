@@ -1,0 +1,31 @@
+Document Type,Vat Number,Transaction Number,Transaction Date,Transaction Comment 1,Transaction Comment 2,Amount in GBP
+SIINV,GB123456789,INV001,2024-01-15,Standard service invoice,Monthly subscription,1500.00
+SICRN,GB123456789,CRN001,2024-01-20,Refund for service,Partial refund,-300.00
+SIINV,GB987654321,INV002,2024-01-16,Cash move to subsidiary,Internal transfer,5000.00
+SIINV,GB123456789,INV003,2024-01-17,Product delivery,Express shipping,2300.00
+SICRN,GB555666777,CRN002,2024-01-18,c/move adjustment,Balance correction,-1200.00
+SIINV,GB987654321,INV004,2024-01-19,Consulting services,Project Alpha,3500.00
+SIINV,GB111222333,INV005,2024-01-20,Software license,Annual renewal,890.00
+SICRN,GB123456789,CRN003,2024-01-21,Credit for overcharge,Billing adjustment,-150.00
+SIINV,GB555666777,INV006,2024-01-22,cash movement,Internal allocation,10000.00
+SIINV,GB987654321,INV007,2024-01-23,Marketing services,Campaign Q1,4200.00
+SICRN,GB111222333,CRN004,2024-01-24,Service cancellation,Early termination,-445.00
+SIINV,GB444555666,INV008,2024-01-25,Equipment rental,3 month period,1800.00
+SIINV,GB123456789,INV009,2024-01-26,Training services,Staff development,2100.00
+SICRN,GB987654321,CRN005,2024-01-27,Cash move reversal,Error correction,-2500.00
+SIINV,GB777888999,INV010,2024-01-28,Legal services,Contract review,3200.00
+SIINV,GB555666777,INV011,2024-01-29,IT support,Monthly retainer,1500.00
+SICRN,GB444555666,CRN006,2024-01-30,Product return,Damaged goods,-600.00
+SIINV,GB111222333,INV012,2024-01-31,move of funds,Department transfer,7500.00
+SIINV,GB123456789,INV013,2024-02-01,Maintenance contract,Quarterly payment,950.00
+SICRN,GB777888999,CRN007,2024-02-02,Discount applied,Volume discount,-320.00
+SIINV,GB987654321,INV014,2024-02-03,Research services,Market analysis,5600.00
+SIINV,GB555666777,INV015,2024-02-04,Facilities management,Building A,2800.00
+SICRN,GB123456789,CRN008,2024-02-05,Price adjustment,Rate change,-180.00
+SIINV,GB444555666,INV016,2024-02-06,Security services,24/7 monitoring,3300.00
+SIINV,GB111222333,INV017,2024-02-07,cash move process,Budget reallocation,4500.00
+SICRN,GB987654321,CRN009,2024-02-08,Contract penalty,Late delivery,-750.00
+SIINV,GB777888999,INV018,2024-02-09,Design services,Branding project,6200.00
+SIINV,GB123456789,INV019,2024-02-10,Logistics support,Distribution center,4100.00
+SICRN,GB555666777,CRN010,2024-02-11,Quality issue,Replacement cost,-890.00
+SIINV,GB987654321,INV020,2024-02-12,Data analytics,Business intelligence,7800.00

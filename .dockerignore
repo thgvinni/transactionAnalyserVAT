@@ -67,10 +67,6 @@ temp
 README.md
 CHANGELOG.md
 
-# Docker files (avoid recursion)
-Dockerfile
-.dockerignore
-
 # CSV files and data
 *.csv
 data/

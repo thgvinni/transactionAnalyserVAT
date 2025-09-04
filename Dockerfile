@@ -1,31 +1,21 @@
-# Build stage
-FROM node:18-alpine AS build
+# Use Python slim image for smaller size
+FROM python:3.11-slim
 
+# Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Copy requirements first for better caching
+COPY requirements.txt .
 
-# Install all dependencies (including dev dependencies for build)
-RUN npm ci
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
-COPY . .
+# Copy application code
+COPY app.py .
+COPY templates/ templates/
 
-# Build the application
-RUN npm run build
-
-# Production stage
-FROM nginx:alpine
-
-# Copy built application
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 8080
+# Expose port 8080 (Cloud Run default)
 EXPOSE 8080
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Run with gunicorn for production, use PORT env var
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 app:app"]

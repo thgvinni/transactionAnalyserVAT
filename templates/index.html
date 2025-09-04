@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAT Transaction Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background-color: #f8f9fa;
+        }
+        .upload-area:hover {
+            background-color: #e9ecef;
+        }
+        .loading {
+            display: none;
+        }
+        .results {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4">
+                    <i class="fas fa-chart-line"></i>
+                    VAT Transaction Analyzer
+                </h1>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="row" id="upload-section">
+            <div class="col-md-8 offset-md-2">
+                <div class="upload-area">
+                    <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                    <h4>Upload CSV File</h4>
+                    <p class="text-muted">Select a CSV file containing transaction data</p>
+                    <input type="file" id="file-input" accept=".csv" class="form-control" style="max-width: 300px; margin: 0 auto;">
+                    <button id="upload-btn" class="btn btn-primary mt-3" disabled>Analyze Transactions</button>
+                </div>
+                
+                <div class="loading text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Processing your file...</p>
+                </div>
+                
+                <div class="alert alert-danger" id="error-message" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results" id="results-section">
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Amount</h5>
+                            <h3 id="total-amount">£0.00</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Transactions</h5>
+                            <h3 id="total-transactions">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Unique VAT Numbers</h5>
+                            <h3 id="unique-vat">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Average Transaction</h5>
+                            <h3 id="avg-transaction">£0.00</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Top VAT Numbers by Amount</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="vat-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Document Types</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="doc-type-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button id="reset-btn" class="btn btn-secondary">Upload Another File</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let vatChart, docTypeChart;
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const uploadBtn = document.getElementById('upload-btn');
+            uploadBtn.disabled = !e.target.files.length;
+        });
+
+        document.getElementById('upload-btn').addEventListener('click', uploadFile);
+        document.getElementById('reset-btn').addEventListener('click', resetApp);
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result.data);
+                } else {
+                    showError(result.error || 'Upload failed');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayResults(data) {
+            // Update summary cards
+            document.getElementById('total-amount').textContent = `£${data.summary.total_amount.toLocaleString()}`;
+            document.getElementById('total-transactions').textContent = data.summary.total_transactions.toLocaleString();
+            document.getElementById('unique-vat').textContent = data.summary.unique_vat_numbers.toLocaleString();
+            document.getElementById('avg-transaction').textContent = `£${data.summary.average_transaction.toLocaleString()}`;
+
+            // Create charts
+            createVATChart(data.vat_analysis);
+            createDocTypeChart(data.document_type_analysis);
+
+            // Show results
+            document.getElementById('upload-section').style.display = 'none';
+            document.getElementById('results-section').style.display = 'block';
+        }
+
+        function createVATChart(data) {
+            const ctx = document.getElementById('vat-chart').getContext('2d');
+            
+            if (vatChart) vatChart.destroy();
+            
+            vatChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item['VAT Number']),
+                    datasets: [{
+                        label: 'Total Amount (£)',
+                        data: data.map(item => item.Total_Amount),
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '£' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDocTypeChart(data) {
+            const ctx = document.getElementById('doc-type-chart').getContext('2d');
+            
+            if (docTypeChart) docTypeChart.destroy();
+            
+            docTypeChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.map(item => item['Document Type']),
+                    datasets: [{
+                        data: data.map(item => item.Total_Amount),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 205, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': £' + context.raw.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function resetApp() {
+            document.getElementById('upload-section').style.display = 'block';
+            document.getElementById('results-section').style.display = 'none';
+            document.getElementById('file-input').value = '';
+            document.getElementById('upload-btn').disabled = true;
+            hideError();
+        }
+
+        function showLoading(show) {
+            document.querySelector('.loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

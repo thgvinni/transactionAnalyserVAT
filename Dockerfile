@@ -17,5 +17,5 @@ COPY templates/ templates/
 # Expose port 8080 (Cloud Run default)
 EXPOSE 8080
 
-# Run with gunicorn for production, use PORT env var
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 app:app"]
+# Run with gunicorn, using PORT env var with bash
+CMD ["bash", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 app:app"]

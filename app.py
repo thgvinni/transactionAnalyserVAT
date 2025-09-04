@@ -55,15 +55,32 @@ def upload_file():
     except Exception as e:
         return jsonify({'error': f'Error processing file: {str(e)}'}), 400
 
-def perform_analysis(df):
-    """Perform VAT transaction analysis similar to the React app"""
+def is_cash_movement(comment1, comment2):
+    """Detect if transaction is a cash movement based on comments"""
+    if pd.isna(comment1):
+        comment1 = ""
+    if pd.isna(comment2):
+        comment2 = ""
     
-    # Group by VAT Number
+    combined_comments = f"{comment1} {comment2}".lower()
+    cash_movement_keywords = ['cash move', 'c/move', 'move']
+    
+    return any(keyword in combined_comments for keyword in cash_movement_keywords)
+
+def perform_analysis(df):
+    """Perform enhanced VAT transaction analysis"""
+    
+    # Add cash movement detection
+    df['Is_Cash_Movement'] = df.apply(lambda row: is_cash_movement(row['Comment 1'], row['Comment 2']), axis=1)
+    
+    # Group by VAT Number with enhanced analysis
     vat_groups = df.groupby('VAT Number').agg({
-        'Amount (GBP)': ['sum', 'count', 'mean']
+        'Amount (GBP)': ['sum', 'count', 'mean'],
+        'Is_Cash_Movement': 'sum'
     }).round(2)
     
-    vat_groups.columns = ['Total_Amount', 'Transaction_Count', 'Average_Amount']
+    vat_groups.columns = ['Total_Amount', 'Transaction_Count', 'Average_Amount', 'Cash_Movement_Count']
+    vat_groups['Non_Cash_Movement_Count'] = vat_groups['Transaction_Count'] - vat_groups['Cash_Movement_Count']
     vat_groups = vat_groups.reset_index()
     
     # Group by Document Type
@@ -75,10 +92,34 @@ def perform_analysis(df):
     doc_type_groups.columns = ['Total_Amount', 'Count']
     doc_type_groups = doc_type_groups.reset_index()
     
+    # Invoice type breakdown per VAT Number
+    invoice_type_analysis = df.groupby(['VAT Number', 'Document Type']).agg({
+        'Amount (GBP)': ['sum', 'count']
+    }).round(2)
+    
+    invoice_type_analysis.columns = ['Amount', 'Count']
+    invoice_type_analysis = invoice_type_analysis.reset_index()
+    
+    # Top 10 VAT numbers by transaction volume (count)
+    top_10_by_volume = vat_groups.nlargest(10, 'Transaction_Count')
+    
+    # Cash movement analysis for top 10 by volume
+    cash_movement_analysis = []
+    for _, vat_row in top_10_by_volume.iterrows():
+        vat_number = vat_row['VAT Number']
+        cash_movement_analysis.append({
+            'VAT_Number': vat_number,
+            'Total_Transactions': int(vat_row['Transaction_Count']),
+            'Cash_Movement': int(vat_row['Cash_Movement_Count']),
+            'Non_Cash_Movement': int(vat_row['Non_Cash_Movement_Count']),
+            'Cash_Movement_Percentage': round((vat_row['Cash_Movement_Count'] / vat_row['Transaction_Count'] * 100), 1) if vat_row['Transaction_Count'] > 0 else 0
+        })
+    
     # Calculate totals
     total_amount = df['Amount (GBP)'].sum()
     total_transactions = len(df)
     unique_vat_numbers = df['VAT Number'].nunique()
+    total_cash_movements = df['Is_Cash_Movement'].sum()
     
     # Prepare chart data
     vat_chart_data = vat_groups.head(10).to_dict('records')
@@ -89,10 +130,15 @@ def perform_analysis(df):
             'total_amount': round(total_amount, 2),
             'total_transactions': total_transactions,
             'unique_vat_numbers': unique_vat_numbers,
+            'total_cash_movements': int(total_cash_movements),
+            'cash_movement_percentage': round((total_cash_movements / total_transactions * 100), 1) if total_transactions > 0 else 0,
             'average_transaction': round(total_amount / total_transactions if total_transactions > 0 else 0, 2)
         },
         'vat_analysis': vat_chart_data,
         'document_type_analysis': doc_type_chart_data,
+        'invoice_type_analysis': invoice_type_analysis.to_dict('records'),
+        'top_vat_by_volume': top_10_by_volume.to_dict('records'),
+        'cash_movement_analysis': cash_movement_analysis,
         'top_vat_numbers': vat_groups.nlargest(5, 'Total_Amount').to_dict('records')
     }
 

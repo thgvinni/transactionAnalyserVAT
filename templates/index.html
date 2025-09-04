@@ -68,7 +68,7 @@
         <div class="results" id="results-section">
             <!-- Summary Cards -->
             <div class="row mb-4">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="card bg-primary text-white">
                         <div class="card-body">
                             <h5 class="card-title">Total Amount</h5>
@@ -76,7 +76,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="card bg-success text-white">
                         <div class="card-body">
                             <h5 class="card-title">Total Transactions</h5>
@@ -84,7 +84,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="card bg-info text-white">
                         <div class="card-body">
                             <h5 class="card-title">Unique VAT Numbers</h5>
@@ -92,7 +92,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="card bg-warning text-white">
                         <div class="card-body">
                             <h5 class="card-title">Average Transaction</h5>
@@ -100,10 +100,54 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-md-2">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Cash Movements</h5>
+                            <h3 id="cash-movements">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-dark text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Cash Move %</h5>
+                            <h3 id="cash-percentage">0%</h3>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Charts -->
             <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Top 10 VAT Numbers by Transaction Volume</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="volume-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Cash vs Non-Cash Movements (Top 10)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="cash-movement-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Second Row of Charts -->
+            <div class="row mt-4">
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">
@@ -140,7 +184,7 @@
     </div>
 
     <script>
-        let vatChart, docTypeChart;
+        let vatChart, docTypeChart, volumeChart, cashMovementChart;
 
         document.getElementById('file-input').addEventListener('change', function(e) {
             const uploadBtn = document.getElementById('upload-btn');
@@ -188,8 +232,12 @@
             document.getElementById('total-transactions').textContent = data.summary.total_transactions.toLocaleString();
             document.getElementById('unique-vat').textContent = data.summary.unique_vat_numbers.toLocaleString();
             document.getElementById('avg-transaction').textContent = `£${data.summary.average_transaction.toLocaleString()}`;
+            document.getElementById('cash-movements').textContent = data.summary.total_cash_movements.toLocaleString();
+            document.getElementById('cash-percentage').textContent = `${data.summary.cash_movement_percentage}%`;
 
             // Create charts
+            createVolumeChart(data.top_vat_by_volume);
+            createCashMovementChart(data.cash_movement_analysis);
             createVATChart(data.vat_analysis);
             createDocTypeChart(data.document_type_analysis);
 
@@ -224,6 +272,93 @@
                             ticks: {
                                 callback: function(value) {
                                     return '£' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createVolumeChart(data) {
+            const ctx = document.getElementById('volume-chart').getContext('2d');
+            
+            if (volumeChart) volumeChart.destroy();
+            
+            volumeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item['VAT Number']),
+                    datasets: [{
+                        label: 'Transaction Count',
+                        data: data.map(item => item.Transaction_Count),
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Transactions'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createCashMovementChart(data) {
+            const ctx = document.getElementById('cash-movement-chart').getContext('2d');
+            
+            if (cashMovementChart) cashMovementChart.destroy();
+            
+            cashMovementChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.VAT_Number),
+                    datasets: [{
+                        label: 'Cash Movement',
+                        data: data.map(item => item.Cash_Movement),
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Non-Cash Movement',
+                        data: data.map(item => item.Non_Cash_Movement),
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Transactions'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const dataIndex = context.dataIndex;
+                                    const percentage = data[dataIndex].Cash_Movement_Percentage;
+                                    return `Cash Move %: ${percentage}%`;
                                 }
                             }
                         }

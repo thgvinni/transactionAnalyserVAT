@@ -7,27 +7,183 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --dark-bg: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --accent-color: #4285f4;
+            --text-primary: #ffffff;
+            --text-secondary: #9aa0a6;
+            --border-color: #3c4043;
+            --hover-bg: #353535;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .container-fluid {
+            background-color: var(--dark-bg);
+            min-height: 100vh;
+        }
+
         .chart-container {
             position: relative;
-            height: 400px;
+            height: 350px;
             margin: 20px 0;
         }
+
         .upload-area {
-            border: 2px dashed #007bff;
-            border-radius: 10px;
-            padding: 40px;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 60px 40px;
             text-align: center;
-            margin: 20px 0;
-            background-color: #f8f9fa;
+            margin: 40px 0;
+            background-color: var(--card-bg);
+            transition: all 0.3s ease;
         }
+
         .upload-area:hover {
-            background-color: #e9ecef;
+            background-color: var(--hover-bg);
+            border-color: var(--accent-color);
         }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-weight: 500;
+            padding: 20px;
+        }
+
+        .card-body {
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #3367d6;
+            border-color: #3367d6;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--hover-bg);
+            border-color: var(--accent-color);
+            color: var(--text-primary);
+        }
+
+        .form-control {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+        }
+
+        .form-control:focus {
+            background-color: var(--card-bg);
+            border-color: var(--accent-color);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(66, 133, 244, 0.25);
+        }
+
         .loading {
             display: none;
+            color: var(--text-secondary);
         }
+
         .results {
             display: none;
+        }
+
+        h1 {
+            font-weight: 400;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+
+        .summary-cards .card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, #353535 100%);
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-cards .card-title {
+            font-size: 0.9rem;
+            font-weight: 400;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-cards h3 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .alert-danger {
+            background-color: #2d1b1b;
+            border-color: #5f2120;
+            color: #f8d7da;
+            border-radius: 8px;
+        }
+
+        .spinner-border {
+            color: var(--accent-color);
+        }
+
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
     </style>
 </head>
@@ -46,10 +202,10 @@
         <div class="row" id="upload-section">
             <div class="col-md-8 offset-md-2">
                 <div class="upload-area">
-                    <i class="fas fa-upload fa-3x text-primary mb-3"></i>
-                    <h4>Upload CSV File</h4>
+                    <div style="font-size: 3rem; margin-bottom: 1rem; color: var(--accent-color);">📊</div>
+                    <h4 style="margin-bottom: 1rem;">Upload CSV File</h4>
                     <p class="text-muted">Select a CSV file containing transaction data</p>
-                    <input type="file" id="file-input" accept=".csv" class="form-control" style="max-width: 300px; margin: 0 auto;">
+                    <input type="file" id="file-input" accept=".csv" class="form-control" style="max-width: 350px; margin: 1rem auto;">
                     <button id="upload-btn" class="btn btn-primary mt-3" disabled>Analyze Transactions</button>
                 </div>
                 
@@ -67,9 +223,9 @@
         <!-- Results Section -->
         <div class="results" id="results-section">
             <!-- Summary Cards -->
-            <div class="row mb-4">
+            <div class="row mb-4 summary-cards">
                 <div class="col-md-2">
-                    <div class="card bg-primary text-white">
+                    <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Total Amount</h5>
                             <h3 id="total-amount">£0.00</h3>
@@ -77,7 +233,7 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card bg-success text-white">
+                    <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Total Transactions</h5>
                             <h3 id="total-transactions">0</h3>
@@ -85,7 +241,7 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card bg-info text-white">
+                    <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Unique VAT Numbers</h5>
                             <h3 id="unique-vat">0</h3>
@@ -93,7 +249,7 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card bg-warning text-white">
+                    <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Average Transaction</h5>
                             <h3 id="avg-transaction">£0.00</h3>
@@ -101,7 +257,7 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card bg-secondary text-white">
+                    <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Cash Movements</h5>
                             <h3 id="cash-movements">0</h3>
@@ -109,7 +265,7 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="card bg-dark text-white">
+                    <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Cash Move %</h5>
                             <h3 id="cash-percentage">0%</h3>

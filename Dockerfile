@@ -7,14 +7,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (use npm install if package-lock.json doesn't exist)
-RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
+# Install all dependencies (needed for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
 
 # Build the application
 RUN npm run build
+
+# Clean up to reduce image size
+RUN rm -rf node_modules
 
 # Production stage
 FROM nginx:alpine

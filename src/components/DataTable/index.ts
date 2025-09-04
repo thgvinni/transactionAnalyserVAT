@@ -1,1 +1,0 @@
-export { VATAnalysisTable } from './VATAnalysisTable';
